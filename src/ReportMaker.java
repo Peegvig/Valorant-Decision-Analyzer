@@ -42,7 +42,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 		System.out.println(System.currentTimeMillis()-time+"ms - Frame Count Obtained.");
 		time = System.currentTimeMillis();
 		
-		//populateSample(); //56 seconds...
+		populateSample(); //56 seconds...
 		System.out.println(System.currentTimeMillis()-time+"ms - Sample Populated.");
 		time = System.currentTimeMillis();
 		
