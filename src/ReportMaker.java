@@ -18,23 +18,27 @@ import javax.swing.*;
  * enemy finding for 5 seconds takes 20 seconds PROBLEM!!!!
  */
 public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yolov5 labels, x y width height
-	public static int sample = 2;
-	public static int fps = 30;
-	private static String videoPath = "SampleData/Sample"+sample+"/Test2Vid.mp4";
-	private static String absoluteVideoPath = "C:\\Users\\lahiv\\eclipse-workspace\\VGA\\SampleData\\Sample"+sample+"\\Test2Vid.mp4";
-	private static String croppedVideoPath = "C:\\Users\\lahiv\\eclipse-workspace\\VGA\\SampleData\\Sample"+sample+"\\Test2VidReversed_00_5Reversed.mp4";
-	private static File[] enemyFiles;
-	private static File[] gunFiles;
-	public static File[] frameFiles;
-	public static String frameFilesName;
-	public static File[] movementErrorFiles;
-	public static String movementErrorFilesName;
-	public static String movementErrorVideoName;
-	private static int frameCount;
-	private static int framesBeforeEnd = 100;
-	private static String issues  = "";
+	public static final int sample = 2;
+	public static final int fps = 30;
+	private String videoPath;
+	private String absoluteVideoPath = "C:\\Users\\lahiv\\eclipse-workspace\\VGA\\SampleData\\Sample"+sample+"\\Test2Vid.mp4";
+	private String croppedVideoPath = "C:\\Users\\lahiv\\eclipse-workspace\\VGA\\SampleData\\Sample"+sample+"\\Test2VidReversed_00_5Reversed.mp4";
+	private File[] enemyFiles;
+	private File[] gunFiles;
+	public File[] frameFiles;
+	public String frameFilesName;
+	public File[] movementErrorFiles;
+	public String movementErrorFilesName;
+	public String movementErrorVideoName;
+	private int frameCount;
+	private int framesBeforeEnd = 100;
+	private String issues  = "";
   	public static void main(String[] args) throws IOException, InterruptedException { 
+		ReportMaker rm = new ReportMaker("SampleData/Sample"+sample+"/Test2Vid.mp4");
+	}
+	public ReportMaker(String vidName) throws IOException, InterruptedException{
 
+		videoPath=vidName;
 		long time = System.currentTimeMillis();
 		
 		frameCount=getMaxFrames();//4 seconds
@@ -73,7 +77,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 		time = System.currentTimeMillis();//LONG TIME
 		System.out.println(issues);
 	}
-	public static void sortFolders() {
+	private void sortFolders() {
         Arrays.sort(enemyFiles, new Comparator<File>() {
             public int compare(File f1, File f2) {
                 return Integer.valueOf(getFileNum(f1)).compareTo(getFileNum(f2));
@@ -95,7 +99,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
             }
         });
 	}
-	public static int getMaxFrames() throws IOException {
+	private int getMaxFrames() throws IOException {
 		Process frames = Runtime.getRuntime().exec("cmd /c ffprobe.exe -v error -select_streams v:0 -count_frames -show_entries stream=nb_read_frames -of default=nokey=1:noprint_wrappers=1 " + croppedVideoPath,null, new File("C:\\FFmpeg\\bin\\"));
 		BufferedReader output_reader = new BufferedReader(new InputStreamReader(frames.getInputStream()));
         String output = "";
@@ -104,7 +108,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
         }
         return -1;
 	}
-	public static int getIndex(File[] folder,int frameNumber) {
+	private int getIndex(File[] folder,int frameNumber) {
 		for (int i = 0; i<folder.length;i++) {
 			if (getFileNum(folder[i])==frameNumber) {
 				return i;
@@ -112,7 +116,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 		}
 		return -1;
 	}
-	public static String getLastEquippedGun(int framesBeforeEnd) throws FileNotFoundException {
+	private String getLastEquippedGun(int framesBeforeEnd) throws FileNotFoundException {
 		int frame=getFileNum(gunFiles[gunFiles.length-1])-framesBeforeEnd;
 		int lastFrameWithGunBeforeRequest = -1;
 		int indexOflastFrameWithGunbeforeRequest = -1;
@@ -149,7 +153,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 			return "nO gUN";
 		}
 	}
-	public static int findIndexFrame1OfFight(int frame) throws FileNotFoundException {
+	private int findIndexFrame1OfFight(int frame) throws FileNotFoundException {
 		if (frame>frameCount) {
 			return -1000;
 		}
@@ -184,7 +188,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 		return indexLastFrame;
 		
 	}
-	public static String getDistanceOfEnemy(int frame) throws FileNotFoundException { //must be 3/3 for fight
+	private String getDistanceOfEnemy(int frame) throws FileNotFoundException { //must be 3/3 for fight
 		//frame 846 is a mid range fight (1 0.533984 0.486111 0.00546875 0.0166667) x y width height
 		//frame 4013 is mid range fight (1 0.499609 0.486806 0.00546875 0.0180556)
 		//frame 7103 is a mid range fight (1 0.492578 0.451389 0.00546875 0.0138889)
@@ -226,14 +230,15 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 		}
 		return "No Fighrs??!?!/";
 	}
-	private static double getHeight(File f) throws FileNotFoundException {
+	private double getHeight(File f) throws FileNotFoundException {
 		Scanner sc = new Scanner(f);
 		if(hasEnemyHead(f)) {
 			while(sc.hasNextLine()) {
 				if (sc.nextInt()==1) {
 					sc.next(); sc.next(); sc.next();
+					double h = sc.nextDouble();
 					sc.close();
-					return sc.nextDouble();
+					return h;
 				}
 				sc.nextLine();
 			}
@@ -245,7 +250,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 		sc.close();
 		return -1.0;
 	}
-	private static File getFile(File[] folder, int num) {
+	private File getFile(File[] folder, int num) {
 		for(int i = 0; i<folder.length;i++) {
 			if(getFileNum(folder[i])==num) {
 				return folder[i];
@@ -256,10 +261,10 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 		}
 		return null;
 	}
-	private static int getFileNum(File f) {
+	private int getFileNum(File f) {
 		return Integer.parseInt(f.getName().substring(f.getName().lastIndexOf("_")+1,f.getName().indexOf(".")));
 	}
-	private static boolean hasEnemyHead(File f) throws FileNotFoundException {
+	private boolean hasEnemyHead(File f) throws FileNotFoundException {
 
 		Scanner sc = new Scanner(f);
 		while(sc.hasNextLine()) {
@@ -272,7 +277,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 		sc.close();
 		return false;
 	}
-	private static String getCrosshairPlacement(int index) throws FileNotFoundException {
+	private String getCrosshairPlacement(int index) throws FileNotFoundException {
 		String output = "";
 		double x = -1;
 		double y = -1;
@@ -322,7 +327,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 		System.out.print(enemyFiles[index].getName() + " ");
 		return output;
 	}
-	private static void getFrames() throws Exception, IOException {
+	private void getFrames() throws Exception, IOException {
 		if (frameFiles.length<frameCount) {
 			FFmpegFrameGrabber g = new FFmpegFrameGrabber(videoPath);
 			g.start();
@@ -336,7 +341,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 	        g.close();
 		}
 	}
-	private static void getMovementErrorFrames() throws Exception, IOException {	
+	private void getMovementErrorFrames() throws Exception, IOException {	
 		File folder = new File(movementErrorFilesName);
 		folder.mkdir();
 		FFmpegFrameGrabber g = new FFmpegFrameGrabber(movementErrorVideoName);
@@ -351,7 +356,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 		g.stop();
         g.close();
 	}
-	private static void displayFrame(int frameNumber) {
+	private void displayFrame(int frameNumber) {
 		JFrame jframe = new JFrame();
 		jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		JLabel jlabel = new JLabel();
@@ -361,7 +366,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 		jframe.setSize(1290, 760);
 		jframe.setVisible(true);
 	}
-	private static void displayMovementErrorFrame(int frameNumber) {
+	private void displayMovementErrorFrame(int frameNumber) {
 		JFrame jframe = new JFrame();
 		jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		JLabel jlabel = new JLabel();
@@ -371,7 +376,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 		jframe.setSize(100, 80);
 		jframe.setVisible(true);
 	}
-	private static boolean hasMovementError(int index) throws IOException {
+	private boolean hasMovementError(int index) throws IOException {
 		File file = movementErrorFiles[index];
 		BufferedImage bimg = ImageIO.read(file);
 		int width = bimg.getWidth();
@@ -392,7 +397,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 		//displayMovementErrorFrame(frameNumber);
 		return false;
 	}
-	private static boolean hasAccurateShot(int index) throws IOException {
+	private boolean hasAccurateShot(int index) throws IOException {
 		File file = movementErrorFiles[index];
 		BufferedImage bimg = ImageIO.read(file);
 		int width = bimg.getWidth();
@@ -413,7 +418,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 		}
 		return false;
 	}
-	private static int msFromEnemyFoundToFirstShot(int frameNumber) throws IOException {
+	private int msFromEnemyFoundToFirstShot(int frameNumber) throws IOException {
 		//PUT A getFileNum(enemyFiles[findIndexFrame1OfFight(frame)])) RESULT FOR THE PARAMETER
 		int currentFrame = frameNumber;
 		boolean firstShotFound = false;
@@ -436,7 +441,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 		}
 		return ms;
 	}
-	private static boolean isFirstShotAccurate(int frameNumber) throws IOException {
+	private boolean isFirstShotAccurate(int frameNumber) throws IOException {
 		//PUT A getFileNum(enemyFiles[findIndexFrame1OfFight(frame)])) RESULT FOR THE PARAMETER
 		int currentFrame=frameNumber;
 		while (currentFrame%fps/10!=0) {
@@ -452,7 +457,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 			currentFrame=currentFrame+fps/10;
 		}
 	}
-	public static int[] getPixel(File f,int x, int y) throws IOException {
+	private int[] getPixel(File f,int x, int y) throws IOException {
         int[] RGB = new int[3];
         try {
         // Load image from file
@@ -470,7 +475,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
         }
         return RGB;
     }
-	public static void populateSample() throws IOException, InterruptedException { // very much hard coded for specific directories
+	private void populateSample() throws IOException, InterruptedException { // very much hard coded for specific directories
 		//have enemies, guns, original vid
 		//need to populate frames, mvmt error, mvmt error vid(?), gun cropped vid(?)
 		//think last 2 are only used for debugging so maybe not them.
@@ -561,7 +566,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 			}
 		}
 	}
-    public static void deleteFolder(String Absdir) {
+    private void deleteFolder(String Absdir) {
 		try {
             // Create a Path object representing the folder
             Path folder = Paths.get(Absdir);
@@ -585,7 +590,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
             e.printStackTrace();
         }
     }
-	public static String runCondaCommand(String command) throws IOException, InterruptedException {
+	private String runCondaCommand(String command) throws IOException, InterruptedException {
         ProcessBuilder processBuilder = new ProcessBuilder("conda", "run", "-n", "yolov5", "cmd.exe", "/C", command);
         processBuilder.redirectErrorStream(true);
         Process process = processBuilder.start();
@@ -610,7 +615,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
 
         return command+" executed.";
     }
-    public static void reverseVideo(String filePath) throws IOException, InterruptedException {
+    private void reverseVideo(String filePath) throws IOException, InterruptedException {
     	File f = new File(filePath.substring(0,filePath.length()-4)+"Reversed.mp4");
     	if (f.exists()) {
     		f.delete();
@@ -630,7 +635,7 @@ public class ReportMaker { //when losslesscut says frame 6996, it is 6997 in yol
             System.out.println("Failed to reverse the video.");
         }
     }
-    public static void cropVideo(String cropAbsVidpath, String startTime, String duration) throws IOException, InterruptedException {
+    private void cropVideo(String cropAbsVidpath, String startTime, String duration) throws IOException, InterruptedException {
     	File f = new File(cropAbsVidpath.substring(0,cropAbsVidpath.length()-4)+"_"+startTime.substring(startTime.length()-2)+"_"+duration+".mp4");
     	if (f.exists()) {
     		f.delete();
